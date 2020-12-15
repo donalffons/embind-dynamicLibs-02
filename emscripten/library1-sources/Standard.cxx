@@ -24,39 +24,16 @@
 #include <stdlib.h>
 #include <mm_malloc.h>
 
-#ifndef OCCT_MMGT_OPT_DEFAULT
-#define OCCT_MMGT_OPT_DEFAULT 0
-#endif
-
 class Standard_MMgrFactory
 {
 public:
   static Standard_MMgrRoot* GetMMgr();
-  ~Standard_MMgrFactory();
-
-private:
-  Standard_MMgrFactory();
-  Standard_MMgrFactory (const Standard_MMgrFactory&);
-  Standard_MMgrFactory& operator= (const Standard_MMgrFactory&);
-
-private:
-  Standard_MMgrRoot* myFMMgr;
+  ~Standard_MMgrFactory(){}
 };
-
-Standard_MMgrFactory::Standard_MMgrFactory()
-: myFMMgr (NULL)
-{
-}
-
-Standard_MMgrFactory::~Standard_MMgrFactory()
-{
-  if (  myFMMgr )
-    myFMMgr->Purge(Standard_True);
-}
 
 
 Standard_MMgrRoot* Standard_MMgrFactory::GetMMgr()
 {
   static Standard_MMgrFactory aFactory;
-  return aFactory.myFMMgr;
+  return NULL;
 }
