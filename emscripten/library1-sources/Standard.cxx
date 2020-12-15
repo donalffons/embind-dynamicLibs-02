@@ -28,11 +28,73 @@
 #define OCCT_MMGT_OPT_DEFAULT 0
 #endif
 
-class Test
+class Standard_MMgrFactory
 {
 public:
-  ~Test(){}
+  static Standard_MMgrRoot* GetMMgr();
+  ~Standard_MMgrFactory();
 
 private:
-  Test(){}
+  Standard_MMgrFactory();
+  Standard_MMgrFactory (const Standard_MMgrFactory&);
+  Standard_MMgrFactory& operator= (const Standard_MMgrFactory&);
+
+private:
+  Standard_MMgrRoot* myFMMgr;
 };
+
+Standard_MMgrFactory::Standard_MMgrFactory()
+: myFMMgr (NULL)
+{
+  Standard_STATIC_ASSERT(sizeof(Standard_Utf8Char)  == 1);
+  Standard_STATIC_ASSERT(sizeof(short) == 2);
+  Standard_STATIC_ASSERT(sizeof(Standard_Utf16Char) == 2);
+  Standard_STATIC_ASSERT(sizeof(Standard_Utf32Char) == 4);
+#ifdef _WIN32
+  Standard_STATIC_ASSERT(sizeof(Standard_WideChar) == sizeof(Standard_Utf16Char));
+#endif
+
+  char* aVar;
+  aVar = getenv ("MMGT_OPT");
+  Standard_Integer anAllocId   = (aVar ?  atoi (aVar): OCCT_MMGT_OPT_DEFAULT);
+
+
+  aVar = getenv ("MMGT_CLEAR");
+  Standard_Boolean toClear     = (aVar ? (atoi (aVar) != 0) : Standard_True);
+
+  switch (anAllocId)
+  {
+    case 1:  // OCCT optimized memory allocator
+    {
+      aVar = getenv ("MMGT_MMAP");
+      Standard_Boolean bMMap       = (aVar ? (atoi (aVar) != 0) : Standard_True);
+      aVar = getenv ("MMGT_CELLSIZE");
+      Standard_Integer aCellSize   = (aVar ?  atoi (aVar) : 200);
+      aVar = getenv ("MMGT_NBPAGES");
+      Standard_Integer aNbPages    = (aVar ?  atoi (aVar) : 1000);
+      aVar = getenv ("MMGT_THRESHOLD");
+      Standard_Integer aThreshold  = (aVar ?  atoi (aVar) : 40000);
+      myFMMgr = new Standard_MMgrOpt (toClear, bMMap, aCellSize, aNbPages, aThreshold);
+      break;
+    }
+    case 2:  // TBB memory allocator
+      myFMMgr = new Standard_MMgrTBBalloc (toClear);
+      break;
+    case 0:
+    default: // system default memory allocator
+      myFMMgr = new Standard_MMgrRaw (toClear);
+  }
+}
+
+Standard_MMgrFactory::~Standard_MMgrFactory()
+{
+  if (  myFMMgr )
+    myFMMgr->Purge(Standard_True);
+}
+
+
+Standard_MMgrRoot* Standard_MMgrFactory::GetMMgr()
+{
+  static Standard_MMgrFactory aFactory;
+  return aFactory.myFMMgr;
+}
