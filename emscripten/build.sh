@@ -7,8 +7,6 @@ emcc \
   -s USE_ES6_IMPORT_META=0 \
   -s MAIN_MODULE=1 \
   -s ASSERTIONS=1 \
-  -O1 \
-  -s AGGRESSIVE_VARIABLE_ELIMINATION=1 \
   -s ALLOW_MEMORY_GROWTH=1 \
   -o ./build/main.js
 
@@ -34,8 +32,6 @@ emcc \
   --bind ./empty-embind.cpp \
   -s SIDE_MODULE=1 \
   -s ASSERTIONS=1 \
-  -O1 \
-  -s AGGRESSIVE_VARIABLE_ELIMINATION=1 \
   -o ./build/library1.wasm
 
 emcc \
@@ -47,6 +43,4 @@ emcc \
   --bind ./empty-embind.cpp \
   -s SIDE_MODULE=1 \
   -s ASSERTIONS=1 \
-  -O1 \
-  -s AGGRESSIVE_VARIABLE_ELIMINATION=1 \
   -o ./build/library2.wasm
