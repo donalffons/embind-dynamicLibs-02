@@ -24,84 +24,190 @@
 #include <stdlib.h>
 #include <mm_malloc.h>
 
-//=======================================================================
-//function : Allocate
-//purpose  : 
-//=======================================================================
+#ifndef OCCT_MMGT_OPT_DEFAULT
+#define OCCT_MMGT_OPT_DEFAULT 0
+#endif
 
-Standard_Address Standard::Allocate(const Standard_Size size)
+//=======================================================================
+//class    : Standard_MMgrFactory 
+//purpose  : Container for pointer to memory manager;
+//           used to construct appropriate memory manager according
+//           to environment settings, and to ensure destruction upon exit
+//=======================================================================
+class Standard_MMgrFactory
 {
-  return NULL;
-}
+public:
+  static Standard_MMgrRoot* GetMMgr();
+  ~Standard_MMgrFactory();
+
+private:
+  Standard_MMgrFactory();
+  Standard_MMgrFactory (const Standard_MMgrFactory&);
+  Standard_MMgrFactory& operator= (const Standard_MMgrFactory&);
+
+private:
+  Standard_MMgrRoot* myFMMgr;
+};
 
 //=======================================================================
-//function : Free
-//purpose  : 
+//function : Standard_MMgrFactory
+//purpose  : Check environment variables and create appropriate memory manager
 //=======================================================================
 
-void Standard::Free (Standard_Address theStorage)
+Standard_MMgrFactory::Standard_MMgrFactory()
+: myFMMgr (NULL)
 {
-}
+/*#if defined(_MSC_VER) && (_MSC_VER > 1400)
+  // Turn ON thread-safe C locale globally to avoid side effects by setlocale() calls between threads.
+  // After this call all following _configthreadlocale() will be ignored assuming
+  // Notice that this is MSVCRT feature - on POSIX systems xlocale API (uselocale instead of setlocale)
+  // should be used explicitly to ensure thread-safety!
 
-//=======================================================================
-//function : Reallocate
-//purpose  : 
-//=======================================================================
+  // This is not well documented call because _ENABLE_PER_THREAD_LOCALE_GLOBAL flag is defined but not implemented for some reason.
+  // -1 will set global locale flag to force _ENABLE_PER_THREAD_LOCALE_GLOBAL + _ENABLE_PER_THREAD_LOCALE_NEW behaviour
+  // although there NO way to turn it off again and following calls will have no effect (locale will be changed only for current thread).
+  _configthreadlocale (-1);
+#endif*/
 
-Standard_Address Standard::Reallocate (Standard_Address theStorage,
-				       const Standard_Size theSize)
-{
-  return NULL;
-}
+  // Check basic assumption.
+  // If assertion happens, then OCCT should be corrected for compatibility with such CPU architecture.
+  Standard_STATIC_ASSERT(sizeof(Standard_Utf8Char)  == 1);
+  Standard_STATIC_ASSERT(sizeof(short) == 2);
+  Standard_STATIC_ASSERT(sizeof(Standard_Utf16Char) == 2);
+  Standard_STATIC_ASSERT(sizeof(Standard_Utf32Char) == 4);
+#ifdef _WIN32
+  Standard_STATIC_ASSERT(sizeof(Standard_WideChar) == sizeof(Standard_Utf16Char));
+#endif
 
-//=======================================================================
-//function : Purge
-//purpose  : 
-//=======================================================================
+  char* aVar;
+  aVar = getenv ("MMGT_OPT");
+  Standard_Integer anAllocId   = (aVar ?  atoi (aVar): OCCT_MMGT_OPT_DEFAULT);
 
-Standard_Integer Standard::Purge()
-{
-  return 1;
-}
-
-//=======================================================================
-//function : AllocateAligned
-//purpose  :
-//=======================================================================
-
-Standard_Address Standard::AllocateAligned (const Standard_Size theSize,
-                                            const Standard_Size theAlign)
-{
-#if defined(_MSC_VER)
-  return _aligned_malloc (theSize, theAlign);
-#elif defined(__ANDROID__) || defined(__QNX__)
-  return memalign (theAlign, theSize);
-#elif (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 1)) && (defined(__i386) || defined(__x86_64)))
-  return _mm_malloc (theSize, theAlign);
-#else
-  void* aPtr;
-  if (posix_memalign (&aPtr, theAlign, theSize))
+#if defined(HAVE_TBB) && defined(_M_IX86)
+  if (anAllocId == 2)
   {
-    return NULL;
+    // CR25396: Check if SSE2 instructions are supported on 32-bit x86 processor on Windows platform,
+    // if not then use MMgrRaw instead of MMgrTBBalloc.
+    // It is to avoid runtime crash when running on a CPU
+    // that supports SSE but does not support SSE2 (some modifications of AMD Sempron).
+    static const DWORD _SSE2_FEATURE_BIT(0x04000000);
+    DWORD volatile dwFeature;
+    _asm
+    {
+      push eax
+      push ebx
+      push ecx
+      push edx
+
+      // get the CPU feature bits
+      mov eax, 1
+      cpuid
+      mov dwFeature, edx
+
+      pop edx
+      pop ecx
+      pop ebx
+      pop eax
+    }
+    if ((dwFeature & _SSE2_FEATURE_BIT) == 0)
+      anAllocId = 0;
   }
-  return aPtr;
 #endif
+
+  aVar = getenv ("MMGT_CLEAR");
+  Standard_Boolean toClear     = (aVar ? (atoi (aVar) != 0) : Standard_True);
+
+  // on Windows (actual for XP and 2000) activate low fragmentation heap
+  // for CRT heap in order to get best performance.
+  // Environment variable MMGT_LFH can be used to switch off this action (if set to 0)
+#if defined(_MSC_VER)
+  aVar = getenv ("MMGT_LFH");
+  if ( aVar == NULL || atoi (aVar) != 0 )
+  {
+    ULONG aHeapInfo = 2;
+    HANDLE aCRTHeap = (HANDLE)_get_heap_handle();
+    HeapSetInformation (aCRTHeap, HeapCompatibilityInformation, &aHeapInfo, sizeof(aHeapInfo));
+  }
+#endif
+
+  switch (anAllocId)
+  {
+    case 1:  // OCCT optimized memory allocator
+    {
+      aVar = getenv ("MMGT_MMAP");
+      Standard_Boolean bMMap       = (aVar ? (atoi (aVar) != 0) : Standard_True);
+      aVar = getenv ("MMGT_CELLSIZE");
+      Standard_Integer aCellSize   = (aVar ?  atoi (aVar) : 200);
+      aVar = getenv ("MMGT_NBPAGES");
+      Standard_Integer aNbPages    = (aVar ?  atoi (aVar) : 1000);
+      aVar = getenv ("MMGT_THRESHOLD");
+      Standard_Integer aThreshold  = (aVar ?  atoi (aVar) : 40000);
+      myFMMgr = new Standard_MMgrOpt (toClear, bMMap, aCellSize, aNbPages, aThreshold);
+      break;
+    }
+    case 2:  // TBB memory allocator
+      myFMMgr = new Standard_MMgrTBBalloc (toClear);
+      break;
+    case 0:
+    default: // system default memory allocator
+      myFMMgr = new Standard_MMgrRaw (toClear);
+  }
 }
 
 //=======================================================================
-//function : FreeAligned
-//purpose  :
+//function : ~Standard_MMgrFactory
+//purpose  : 
 //=======================================================================
 
-void Standard::FreeAligned (Standard_Address thePtrAligned)
+Standard_MMgrFactory::~Standard_MMgrFactory()
 {
-#if defined(_MSC_VER)
-  _aligned_free (thePtrAligned);
-#elif defined(__ANDROID__) || defined(__QNX__)
-  free (thePtrAligned);
-#elif (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 1)) && (defined(__i386) || defined(__x86_64)))
-  _mm_free (thePtrAligned);
-#else
-  free (thePtrAligned);
-#endif
+  if (  myFMMgr )
+    myFMMgr->Purge(Standard_True);
+}
+
+//=======================================================================
+// function: GetMMgr
+//
+// This static function has a purpose to wrap static holder for memory 
+// manager instance. 
+//
+// Wrapping holder inside a function is needed to ensure that it will
+// be initialized not later than the first call to memory manager (that
+// would be impossible to guarantee if holder was static variable on 
+// global or file scope, because memory manager may be called from 
+// constructors of other static objects).
+//
+// Note that at the same time we could not guarantee that the holder 
+// object is destroyed after last call to memory manager, since that 
+// last call may be from static Handle() object which has been initialized
+// dynamically during program execution rather than in its constructor.
+//
+// Therefore holder currently does not call destructor of the memory manager 
+// but only its method Purge() with Standard_True.
+//
+// To free the memory completely, we probably could use compiler-specific 
+// pragmas (such as '#pragma fini' on SUN Solaris and '#pragma init_seg' on 
+// WNT MSVC++) to put destructing function in code segment that is called
+// after destructors of other (even static) objects. However, this is not 
+// done by the moment since it is compiler-dependent and there is no guarantee 
+// thatsome other object calling memory manager is not placed also in that segment...
+//
+// Note that C runtime function atexit() could not help in this problem 
+// since its behaviour is the same as for destructors of static objects 
+// (see ISO 14882:1998 "Programming languages -- C++" 3.6.3)
+//
+// The correct approach to deal with the problem would be to have memory manager 
+// to properly control its memory allocation and caching free blocks so 
+// as to release all memory as soon as it is returned to it, and probably
+// even delete itself if all memory it manages has been released and 
+// last call to method Purge() was with True.
+//
+// Note that one possible method to control memory allocations could
+// be counting calls to Allocate() and Free()...
+//
+//=======================================================================
+Standard_MMgrRoot* Standard_MMgrFactory::GetMMgr()
+{
+  static Standard_MMgrFactory aFactory;
+  return aFactory.myFMMgr;
 }
