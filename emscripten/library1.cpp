@@ -61,6 +61,5 @@ private:
 //=======================================================================
 Standard_MMgrRoot* Standard_MMgrFactory::GetMMgr()
 {
-  static Standard_MMgrFactory aFactory;
-  return aFactory.myFMMgr;
+  return nullptr;
 }
