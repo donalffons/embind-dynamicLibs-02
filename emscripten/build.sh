@@ -10,7 +10,7 @@ emcc \
   -o ./build/main.js
 
 emcc \
-  ./library1-sources/Standard.cxx \
+  ./library1.cpp \
   --bind ./empty-embind.cpp \
   -s SIDE_MODULE=1 \
   -o ./build/library1.wasm
