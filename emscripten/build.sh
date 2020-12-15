@@ -14,10 +14,7 @@ emcc \
   -I./globalIncludes \
   ./library1-sources/NCollection_BaseAllocator.cxx \
   ./library1-sources/NCollection_BaseMap.cxx \
-  ./library1-sources/Standard_CLocaleSentry.cxx \
   ./library1-sources/Standard.cxx \
-  ./library1-sources/Standard_Dump.cxx \
-  ./library1-sources/Standard_ExtString.cxx \
   ./library1-sources/Standard_Failure.cxx \
   ./library1-sources/Standard_math.cxx \
   ./library1-sources/Standard_MMgrOpt.cxx \
