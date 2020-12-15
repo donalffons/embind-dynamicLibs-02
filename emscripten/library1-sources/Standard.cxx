@@ -2,6 +2,7 @@ class Standard_MMgrFactory
 {
 public:
   static void GetMMgr();
+  ~Standard_MMgrFactory(){}
 };
 
 

@@ -11,7 +11,6 @@ emcc \
   -o ./build/main.js
 
 emcc \
-  -I./globalIncludes \
   ./library1-sources/Standard.cxx \
   --bind ./empty-embind.cpp \
   -s SIDE_MODULE=1 \
