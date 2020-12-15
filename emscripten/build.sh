@@ -12,7 +12,6 @@ emcc \
 
 emcc \
   -I./globalIncludes \
-  ./library1-sources/Standard.cxx \
   --bind ./empty-embind.cpp \
   -s SIDE_MODULE=1 \
   -s ASSERTIONS=1 \
