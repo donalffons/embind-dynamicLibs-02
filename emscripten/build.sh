@@ -32,11 +32,6 @@ emcc \
   -o ./build/library1.wasm
 
 emcc \
-  -I./globalIncludes \
-  ./library2-sources/math_Function.cxx \
-  ./library2-sources/math_FunctionRoot.cxx \
-  ./library2-sources/math_FunctionRoots.cxx \
-  ./library2-sources/math_FunctionSet.cxx \
   --bind ./empty-embind.cpp \
   -s SIDE_MODULE=1 \
   -s ASSERTIONS=1 \
