@@ -32,14 +32,10 @@ emcc \
   ./library1-sources/Standard_Transient.cxx \
   ./library1-sources/TCollection.cxx \
   --bind ./empty-embind.cpp \
-  -s ENVIRONMENT='web' \
-  -s EXPORT_ES6=1 \
-  -s USE_ES6_IMPORT_META=0 \
   -s SIDE_MODULE=1 \
   -s ASSERTIONS=1 \
   -O1 \
   -s AGGRESSIVE_VARIABLE_ELIMINATION=1 \
-  -s ALLOW_MEMORY_GROWTH=1 \
   -o ./build/library1.wasm
 
 emcc \
@@ -49,12 +45,8 @@ emcc \
   ./library2-sources/math_FunctionRoots.cxx \
   ./library2-sources/math_FunctionSet.cxx \
   --bind ./empty-embind.cpp \
-  -s ENVIRONMENT='web' \
-  -s EXPORT_ES6=1 \
-  -s USE_ES6_IMPORT_META=0 \
   -s SIDE_MODULE=1 \
   -s ASSERTIONS=1 \
   -O1 \
   -s AGGRESSIVE_VARIABLE_ELIMINATION=1 \
-  -s ALLOW_MEMORY_GROWTH=1 \
   -o ./build/library2.wasm
