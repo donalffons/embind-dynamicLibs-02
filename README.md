@@ -4,6 +4,8 @@ Run: `docker run -it --net=host -v "$(pwd)":"/app/" test`
 
 Visit: `http://localhost:5000/javascript/`
 
+This example runs Emscripten WASM-instantiation in an infinite loop until the error occurs.
+
 Problem:
 
 Current build configuration yields:
