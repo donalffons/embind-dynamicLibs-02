@@ -1,5 +1,5 @@
-#ifndef _LIBRARY_HEADER
-#define _LIBRARY_HEADER
+#ifndef _LIBRARY1_HEADER
+#define _LIBRARY1_HEADER
 
 template <class T>
 class handle
@@ -21,4 +21,4 @@ public:
 typedef handle<SomeTestClass> Handle_SomeTestClass;
 
 
-#endif // _LIBRARY_HEADER
+#endif // _LIBRARY1_HEADER
