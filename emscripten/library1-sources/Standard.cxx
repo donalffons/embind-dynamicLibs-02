@@ -1,8 +1,13 @@
+class Standard_MMgrRoot {};
+
 class Standard_MMgrFactory
 {
 public:
-  static void GetMMgr();
+  static Standard_MMgrRoot* GetMMgr();
   ~Standard_MMgrFactory(){}
+
+private:
+  Standard_MMgrRoot* myFMMgr;
 };
 
 
@@ -54,7 +59,8 @@ public:
 // be counting calls to Allocate() and Free()...
 //
 //=======================================================================
-void Standard_MMgrFactory::GetMMgr()
+Standard_MMgrRoot* Standard_MMgrFactory::GetMMgr()
 {
   static Standard_MMgrFactory aFactory;
+  return aFactory.myFMMgr;
 }
