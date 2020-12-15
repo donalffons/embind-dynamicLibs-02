@@ -12,20 +12,7 @@ emcc \
 
 emcc \
   -I./globalIncludes \
-  ./library1-sources/NCollection_BaseAllocator.cxx \
-  ./library1-sources/NCollection_BaseMap.cxx \
   ./library1-sources/Standard.cxx \
-  ./library1-sources/Standard_Failure.cxx \
-  ./library1-sources/Standard_math.cxx \
-  ./library1-sources/Standard_MMgrOpt.cxx \
-  ./library1-sources/Standard_MMgrRaw.cxx \
-  ./library1-sources/Standard_MMgrRoot.cxx \
-  ./library1-sources/Standard_MMgrTBBalloc.cxx \
-  ./library1-sources/Standard_OutOfMemory.cxx \
-  ./library1-sources/Standard_Real.cxx \
-  ./library1-sources/Standard_ShortReal.cxx \
-  ./library1-sources/Standard_Transient.cxx \
-  ./library1-sources/TCollection.cxx \
   --bind ./empty-embind.cpp \
   -s SIDE_MODULE=1 \
   -s ASSERTIONS=1 \
