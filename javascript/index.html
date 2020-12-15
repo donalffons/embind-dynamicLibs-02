@@ -10,8 +10,7 @@
           const o = await main({
             locateFile: f => "/emscripten/build/main.wasm",
             dynamicLibraries: [
-              "/emscripten/build/library1.wasm",
-              "/emscripten/build/library2.wasm"
+              "/emscripten/build/library1.wasm"
             ]
           });
           console.log("done loading");
