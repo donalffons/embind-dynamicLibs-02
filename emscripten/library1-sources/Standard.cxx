@@ -15,6 +15,18 @@
 // commercial license or contractual agreement.
 
 
+#include <Standard.hxx>
+#include <Standard_MMgrOpt.hxx>
+#include <Standard_MMgrRaw.hxx>
+#include <Standard_MMgrTBBalloc.hxx>
+#include <Standard_Assert.hxx>
+
+#include <stdlib.h>
+#include <mm_malloc.h>
+
+#ifndef OCCT_MMGT_OPT_DEFAULT
+#define OCCT_MMGT_OPT_DEFAULT 0
+#endif
 
 class Test
 {
