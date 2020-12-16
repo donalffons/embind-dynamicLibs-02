@@ -6,7 +6,6 @@ emcc \
   -s EXPORT_ES6=1 \
   -s USE_ES6_IMPORT_META=0 \
   -s MAIN_MODULE=1 \
-  -s ALLOW_MEMORY_GROWTH=1 \
   -o ./build/main.js
 
 emcc \
